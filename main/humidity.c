@@ -7,7 +7,6 @@
 // #include <sys/socket.h> /* socket, connect */
 #include <netinet/in.h> /* struct sockaddr_in, struct sockaddr */
 #include <netdb.h> /* struct hostent, gethostbyname */
-#include <string.h> /* memmem */
 #include <math.h>
 
 #include "esp_log.h"
@@ -20,7 +19,8 @@
 
 void error(const char *msg) { perror(msg); exit(0); }
 
-int str2int(char* str){
+int str2int(char* str)
+{
   int out = 0;
   int base = 1;
   int str_len = strlen(str);
@@ -33,6 +33,17 @@ int str2int(char* str){
   }
   return out;
 }
+
+char* find_needle(char* haystack, int haystack_len, char* start, char* end)
+{
+  char* beginning = (char*)(((uintptr_t)memmem(haystack, haystack_len, start, strlen(start)))+strlen(start));
+  char* ending = memmem(beginning, (((uintptr_t)haystack+haystack_len)-(uintptr_t)beginning), end, strlen(end));
+  int needle_len = ((uintptr_t)ending-(uintptr_t)beginning)+1;
+  char* needle = malloc(needle_len);
+  memset(needle, 0, needle_len);
+  memcpy(needle, beginning, needle_len-1);
+  return needle;
+} 
 
 int get_humidity(int zip_code)
 {
@@ -86,6 +97,7 @@ int get_humidity(int zip_code)
         }
         sent+=bytes;
     } while (sent < total);
+    free(request);
 
     /* Zero out response array as it will store strings */
     memset(response,0,4096);
@@ -100,29 +112,35 @@ int get_humidity(int zip_code)
 
     /* Parse the response, strip the header.
     Http headers end with two CRLFs */
-    char* header_end = (char*)((uint64_t)memmem(response, received, "\r\n\r\n", 4) + 9);
+    char* header_end = (char*)((uintptr_t)memmem(response, received, "\r\n\r\n", 4) + 9);
     /* Get length of response without the header */
-    int header_len = (uint64_t)header_end - (uint64_t)response; 
+    int header_len = (uintptr_t)header_end - (uintptr_t)response; 
+    // free(response);
     char* response_data = malloc(received-header_len);
     /* Copy the response without headers into a new buffer*/
     memcpy(response_data, header_end, strlen(header_end));
+  
+    char* humidity_str = find_needle(response_data, received-header_len, "\"humidity\":", ",");
 
-    /* Search for humidity substring- offset by 11 bytes to get just the value */
-    char* humidity_begin = (char*)((uint64_t)memmem(response_data, strlen(response_data), "\"humidity\":", 11) + 11);
-    if(humidity_begin == NULL){
-      error("Couldn't find humidity");
-    }
-    /* Search for the comma that indicates the end of the humidity value */
-    char* humidity_end = memmem(humidity_begin, 8, ",", 1);
-    /* Get length of the humidity value */
-    int humidity_len = (uint64_t)humidity_end - (uint64_t)humidity_begin;
-    char* humidity_str = malloc(humidity_len+1);
-    memset(humidity_str, 0, humidity_len+1);
-
-    memcpy(humidity_str, humidity_begin, humidity_len);
+    // /* Search for humidity substring- offset by 11 bytes to get just the value */
+    // char* humidity_begin = (char*)((uintptr_t)memmem(response_data, strlen(response_data), "\"humidity\":", 11) + 11);
+    // if(humidity_begin == NULL){
+    //   error("Couldn't find humidity");
+    // }
+    // free(response_data);
+    // /* Search for the comma that indicates the end of the humidity value */
+    // char* humidity_end = memmem(humidity_begin, 8, ",", 1);
+    // /* Get length of the humidity value */
+    // int humidity_len = (uintptr_t)humidity_end - (uintptr_t)humidity_begin;
+    // char* humidity_str = malloc(humidity_len+1);
+    // memset(humidity_str, 0, humidity_len+1);
+    // memcpy(humidity_str, humidity_begin, humidity_len);
 
     /* Convert string to int with simple conversion algorithm */
     int humidity = str2int(humidity_str);
+    free(humidity_str);
+    free(response);
+    free(response_data);
 
     //TODO: DEBUG_LOG("\n%s\n",response);
 
