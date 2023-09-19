@@ -77,7 +77,7 @@ int get_humidity(int zip_code)
     memset(&serv_addr,0,sizeof(serv_addr));
 
     serv_addr.sin_family = AF_INET;
-    /* host to network short, converts port number to big-endian or "network" byte order */
+    /* Host to network short, converts port number to big-endian or "network" byte order */
     serv_addr.sin_port = htons(portno);
     memcpy(&serv_addr.sin_addr.s_addr,server->h_addr,server->h_length);
 

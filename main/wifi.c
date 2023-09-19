@@ -13,8 +13,8 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#define EXAMPLE_ESP_WIFI_SSID      ssid
-#define EXAMPLE_ESP_WIFI_PASS      password
+#define EXAMPLE_ESP_WIFI_SSID      "ssid"
+#define EXAMPLE_ESP_WIFI_PASS      "password"
 #define EXAMPLE_ESP_MAXIMUM_RETRY  5
 
 /* FreeRTOS event group to signal when we are connected */

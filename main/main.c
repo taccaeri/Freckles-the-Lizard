@@ -1,5 +1,6 @@
 #include "humidity.h"
 #include "wifi.h"
+#include "color.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -18,6 +19,7 @@
 /* Bit mask of selected pin */
 #define GPIO_OUTPUT_PIN_SEL (1ULL<<GPIO_NUM_26)
 
+float r, g, b;
 
 /* simple function that turns led on and off to test microcontroller */
 void blink(void)
@@ -48,12 +50,18 @@ void blink(void)
 
 void app_main(void)
 {
-    blink();
+    // blink();
 
-    wifi_init();
+    i2c_init();
 
-    int humidity = get_humidity(20190);
-    ESP_LOGI("humidity", "%d", humidity);
+    tcs_init();
+
+    get_color(r, g, b);
+
+    // wifi_init();
+
+    // int humidity = get_humidity(20190);
+    // ESP_LOGI("humidity", "%d", humidity);
 
     // /* Print chip information */ 
     // esp_chip_info_t chip_info;

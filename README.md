@@ -12,13 +12,15 @@ When given colors to choose from, it will make choices based on its accumulated 
 
 - Implemented code to fetch weather API data
 
-## Future Updates
-
 - Use RGB sensor to detect colors on objects 
 
-- Implement machine learning/NN and set initial weights with humidity data
+## Future Updates
 
-- Install LEDs (the lizard's freckles) and program them to change to the lizard's preferred color
+- Interpret humidity to color data
+
+- Display preferred color on LEDs (the lizard's freckles) 
+
+- Establish communication between the lizards
 
 - Construct a lizard form out of 3D printed parts
 
