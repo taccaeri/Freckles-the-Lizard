@@ -7,46 +7,88 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "driver/gpio.h" /* Set gpio pins */
+#include "driver/gpio.h" 
+#include "driver/ledc.h"
 #include "sdkconfig.h"
+
+#include "esp_check.h"
 #include "esp_system.h"
-#include "esp_log.h" /* Logging library */
-// #include "esp_chip_info.h"
+#include "esp_log.h" 
 #include "esp_flash.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-/* Bit mask of selected pin */
-#define GPIO_OUTPUT_PIN_SEL (1ULL<<GPIO_NUM_26)
-
 float r, g, b;
 
-/* simple function that turns led on and off to test microcontroller */
-void blink(void)
-{
-    /* zero-initialize the config structure. */
-    gpio_config_t io_conf = {};
-    /* disable interrupt */
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    /* set as output mode */
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    /* bit mask of the pins that you want to set */
-    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
-    /* disable pull-down mode */
-    io_conf.pull_down_en = 0;
-    /* disable pull-up mode */
-    io_conf.pull_up_en = 0;
-    /* configure GPIO with the given settings */
-    gpio_config(&io_conf);
+#define LEDC_TIMER              LEDC_TIMER_0
+#define LEDC_MODE               LEDC_LOW_SPEED_MODE
+#define LEDC_DUTY_RES           LEDC_TIMER_8_BIT 
+#define LEDC_FREQUENCY          (5000) // Frequency in Hertz. Set frequency at 5 kHz
 
-    /* pull pin high */
-    gpio_set_level(GPIO_NUM_26, 1);
-    /* delay for 1 second */
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    /* pull pin low */
-    gpio_set_level(GPIO_NUM_26, 0);
+#define LEDC_RED                (18) 
+#define LEDC_GREEN              (17) 
+#define LEDC_BLUE               (16) 
+
+
+static void ledc_init(void)
+{
+    // Prepare and then apply the LEDC PWM timer configuration
+    ledc_timer_config_t ledc_timer = {
+        .speed_mode       = LEDC_MODE,
+        .timer_num        = LEDC_TIMER,
+        .duty_resolution  = LEDC_DUTY_RES,
+        .freq_hz          = LEDC_FREQUENCY,  
+        .clk_cfg          = LEDC_AUTO_CLK
+    };
+    ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+
+    // Prepare and then apply the LEDC PWM channel configuration
+    ledc_channel_config_t ledc_red = {
+        .speed_mode     = LEDC_MODE,
+        .channel        = LEDC_CHANNEL_0,
+        .timer_sel      = LEDC_TIMER,
+        .intr_type      = LEDC_INTR_DISABLE,
+        .gpio_num       = LEDC_RED,
+        .duty           = 0, // Set duty to 0%
+        .hpoint         = 0
+    };
+    ESP_ERROR_CHECK(ledc_channel_config(&ledc_red));
+
+        ledc_channel_config_t ledc_green = {
+        .speed_mode     = LEDC_MODE,
+        .channel        = LEDC_CHANNEL_1,
+        .timer_sel      = LEDC_TIMER,
+        .intr_type      = LEDC_INTR_DISABLE,
+        .gpio_num       = LEDC_GREEN,
+        .duty           = 0, // Set duty to 0%
+        .hpoint         = 0
+    };
+    ESP_ERROR_CHECK(ledc_channel_config(&ledc_green));
+
+        ledc_channel_config_t ledc_blue = {
+        .speed_mode     = LEDC_MODE,
+        .channel        = LEDC_CHANNEL_2,
+        .timer_sel      = LEDC_TIMER,
+        .intr_type      = LEDC_INTR_DISABLE,
+        .gpio_num       = LEDC_BLUE,
+        .duty           = 0, // Set duty to 0%
+        .hpoint         = 0
+    };
+    ESP_ERROR_CHECK(ledc_channel_config(&ledc_blue));
 }
 
+void ledc_output(uint8_t R, uint8_t G, uint8_t B)
+{
+    /* RED */
+    ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_0, R);
+    ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_0);
+    /* GREEN */
+    ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_1, G);
+    ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_1);
+    /* BLUE */
+    ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_2, B);
+    ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_2);
+}
 
 void app_main(void)
 {
@@ -56,39 +98,24 @@ void app_main(void)
 
     tcs_init();
 
-    get_color(r, g, b);
+    ledc_init();
+
+    ledc_output(255, 128, 128);
+
+    // uint8_t val = 0;
+
+    // while (1) {
+    //     /* Set the voltage every 100 ms */
+    //     ledc_output(val, 0, 0);
+    //     val += 10;
+    //     val %= 250;
+    //     vTaskDelay(pdMS_TO_TICKS(500));
+    // }
+
+    // get_color(r, g, b);
 
     // wifi_init();
 
     // int humidity = get_humidity(20190);
     // ESP_LOGI("humidity", "%d", humidity);
-
-    // /* Print chip information */ 
-    // esp_chip_info_t chip_info;
-    // uint32_t flash_size;
-    // esp_chip_info(&chip_info);
-    // printf("This is %s chip with %d CPU core(s), WiFi%s%s, ",
-    //        CONFIG_IDF_TARGET,
-    //        chip_info.cores,
-    //        (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-    //        (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-
-    // unsigned major_rev = chip_info.revision / 100;
-    // unsigned minor_rev = chip_info.revision % 100;
-    // printf("silicon revision v%d.%d, ", major_rev, minor_rev);
-    // if(esp_flash_get_size(NULL, &flash_size) != ESP_OK) {
-    //     printf("Get flash size failed");
-    //     return;
-    // }
-
-    // printf("%uMB %s flash\n", flash_size / (1024 * 1024),
-    //        (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-
-    // printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
-
-    // vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-    // printf("Restarting now.\n");
-    // fflush(stdout);
-    // esp_restart();
 }

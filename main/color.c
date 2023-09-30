@@ -1,6 +1,6 @@
 #include "color.h"
 
-static const char *TAG = "MESSAGE";
+static const char *TAG = "LOG";
 
 
 esp_err_t i2c_init(void)

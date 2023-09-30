@@ -6,14 +6,6 @@ A robot in the shape of a lizard that develops a preference for color using humi
 
 When given colors to choose from, it will make choices based on its accumulated preferences. 
 
-## Current Progress
-
-- Established Wi-Fi connection 
-
-- Implemented code to fetch weather API data
-
-- Use RGB sensor to detect colors on objects 
-
 ## Future Updates
 
 - Interpret humidity to color data

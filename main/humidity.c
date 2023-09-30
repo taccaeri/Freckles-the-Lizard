@@ -122,20 +122,6 @@ int get_humidity(int zip_code)
   
     char* humidity_str = find_needle(response_data, received-header_len, "\"humidity\":", ",");
 
-    // /* Search for humidity substring- offset by 11 bytes to get just the value */
-    // char* humidity_begin = (char*)((uintptr_t)memmem(response_data, strlen(response_data), "\"humidity\":", 11) + 11);
-    // if(humidity_begin == NULL){
-    //   error("Couldn't find humidity");
-    // }
-    // free(response_data);
-    // /* Search for the comma that indicates the end of the humidity value */
-    // char* humidity_end = memmem(humidity_begin, 8, ",", 1);
-    // /* Get length of the humidity value */
-    // int humidity_len = (uintptr_t)humidity_end - (uintptr_t)humidity_begin;
-    // char* humidity_str = malloc(humidity_len+1);
-    // memset(humidity_str, 0, humidity_len+1);
-    // memcpy(humidity_str, humidity_begin, humidity_len);
-
     /* Convert string to int with simple conversion algorithm */
     int humidity = str2int(humidity_str);
     free(humidity_str);

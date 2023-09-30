@@ -74,6 +74,8 @@ esp_err_t tcs_init(void);
 
 esp_err_t wr_tcs(uint8_t reg_addr, uint8_t* data_wr, size_t size);
 
-esp_err_t rd_tcs(uint8_t reg_addr, uint8_t* data_rd, size_t size);
+esp_err_t rd_tcs(uint8_t reg_addr, uint8_t* data_wr, size_t size);
+
+// uint16_t rd_16_tcs(uint8_t reg_addr);
 
 void get_color(float r, float g, float b);
